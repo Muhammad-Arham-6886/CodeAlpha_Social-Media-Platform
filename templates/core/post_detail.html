@@ -1,0 +1,116 @@
+{% extends "core/base.html" %}
+{% block content %}
+    <!-- Post Detail -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <div class="d-flex align-items-center">
+                {% if post.author.profile.profile_picture %}
+                    <img src="{{ post.author.profile.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" width="50" height="50" onerror="this.src='/media/default.svg'">
+                {% else %}
+                    <img src="/media/default.svg" alt="Profile" class="rounded-circle me-3" width="50" height="50">
+                {% endif %}
+                <div>
+                    <h5 class="mb-0">
+                        <a href="{% url 'profile' post.author.username %}" class="text-decoration-none">
+                            {{ post.author.get_full_name|default:post.author.username }}
+                        </a>
+                    </h5>
+                    <small class="text-muted">@{{ post.author.username }} • {{ post.date_posted|date:"M d, Y" }} at {{ post.date_posted|time:"H:i" }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <p class="card-text fs-5">{{ post.content }}</p>
+            {% if post.image %}
+                <img src="{{ post.image.url }}" alt="Post image" class="img-fluid rounded mb-3" style="max-height: 500px; width: 100%; object-fit: cover;">
+            {% endif %}
+        </div>
+        
+        <div class="card-footer bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-sm btn-outline-danger like-btn me-3" data-post-id="{{ post.pk }}">
+                            <i class="fas fa-heart {% if user in post.likes.all %}text-danger{% endif %}"></i>
+                            <span class="likes-count">{{ post.total_likes }}</span>
+                        </button>
+                    {% else %}
+                        <span class="text-muted me-3">
+                            <i class="fas fa-heart"></i> {{ post.total_likes }}
+                        </span>
+                    {% endif %}
+                    
+                    <span class="text-muted">
+                        <i class="fas fa-comment"></i> {{ comments.count }} comments
+                    </span>
+                </div>
+                
+                <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Feed
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Comments</h5>
+        </div>
+        
+        <!-- Add Comment Form -->
+        {% if user.is_authenticated %}
+            <div class="card-body border-bottom">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-start">
+                        <img src="{{ user.profile.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" width="40" height="40">
+                        <div class="flex-grow-1">
+                            {{ comment_form.content }}
+                            <div class="mt-2">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-paper-plane me-1"></i>Post Comment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="card-body border-bottom text-center">
+                <p class="text-muted mb-2">Join the conversation!</p>
+                <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Login to Comment</a>
+            </div>
+        {% endif %}
+        
+        <!-- Comments List -->
+        <div class="card-body">
+            {% for comment in comments %}
+                <div class="d-flex align-items-start mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                    {% if comment.author.profile.profile_picture %}
+                        <img src="{{ comment.author.profile.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" width="40" height="40" onerror="this.src='/media/default.svg'">
+                    {% else %}
+                        <img src="/media/default.svg" alt="Profile" class="rounded-circle me-3" width="40" height="40">
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <h6 class="mb-0 me-2">
+                                <a href="{% url 'profile' comment.author.username %}" class="text-decoration-none">
+                                    {{ comment.author.get_full_name|default:comment.author.username }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">{{ comment.date_posted|timesince }} ago</small>
+                        </div>
+                        <p class="mb-0">{{ comment.content }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No comments yet. Be the first to comment!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
